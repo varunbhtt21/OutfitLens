@@ -95,27 +95,8 @@ class Password(ValueObject):
                 f"Password must be {self.MAX_LENGTH} characters or less"
             )
 
-        # Check for at least one uppercase letter
-        if not re.search(r"[A-Z]", password):
-            raise InvalidPasswordError(
-                "Password must contain at least one uppercase letter"
-            )
-
-        # Check for at least one lowercase letter
-        if not re.search(r"[a-z]", password):
-            raise InvalidPasswordError(
-                "Password must contain at least one lowercase letter"
-            )
-
-        # Check for at least one digit
-        if not re.search(r"\d", password):
-            raise InvalidPasswordError("Password must contain at least one digit")
-
-        # Check for at least one special character
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise InvalidPasswordError(
-                "Password must contain at least one special character"
-            )
+        # Relaxed validation - just check length
+        # Users can use any combination of characters as long as it's 8+ chars
 
     def __str__(self) -> str:
         """String representation (hidden for security)."""

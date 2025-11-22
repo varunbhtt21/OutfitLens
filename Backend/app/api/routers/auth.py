@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.schemas.auth_schemas import (
     RegisterRequest,
+    RegisterResponse,
     LoginRequest,
     TokenResponse,
     RefreshTokenRequest,
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post(
     "/register",
-    response_model=UserResponse,
+    response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
     description="Create a new user account with email and password",
@@ -39,7 +40,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def register(
     request: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
-) -> UserResponse:
+) -> RegisterResponse:
     """Register a new user account."""
     try:
         dto = CreateUserDTO(
@@ -50,14 +51,22 @@ async def register(
 
         user_dto = auth_service.register_user(dto)
 
-        return UserResponse(
-            id=user_dto.id,
-            email=user_dto.email,
-            full_name=user_dto.full_name,
-            is_active=user_dto.is_active,
-            is_verified=user_dto.is_verified,
-            created_at=user_dto.created_at,
-            updated_at=user_dto.updated_at,
+        # Generate tokens for the new user
+        tokens = auth_service.login(request.email, request.password)
+
+        return RegisterResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type=tokens["token_type"],
+            user={
+                "id": user_dto.id,
+                "email": user_dto.email,
+                "full_name": user_dto.full_name,
+                "is_active": user_dto.is_active,
+                "is_verified": user_dto.is_verified,
+                "created_at": user_dto.created_at.isoformat() if user_dto.created_at else None,
+                "updated_at": user_dto.updated_at.isoformat() if user_dto.updated_at else None,
+            }
         )
 
     except UserAlreadyExistsError as e:
